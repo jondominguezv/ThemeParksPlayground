@@ -1,4 +1,5 @@
 export type AttractionCardProps = {
+    id: string
     name: string
     status: string
     waitTime: number
