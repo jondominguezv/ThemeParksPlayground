@@ -17,6 +17,7 @@ function App() {
         const tp = new ThemeParks({ fetch: (...args) => fetch(...args) });
         const live = await tp.entity(UNIVERSAL_ORLANDO_RESORT).live();
         const mapped = (live.liveData ?? []).map((entry) => ({
+          id: entry.id,
           name: entry.name,
           status: entry.status ?? 'UNKNOWN',
           waitTime: currentWaitTime(entry) ?? 0,
@@ -36,8 +37,8 @@ function App() {
     <>
       <div className="ticks"></div>
       <section id="attractions">
-        <p>Testing</p>
-        {loading ? <p>Loading...</p> : attractions.map((attraction) => (<AttractionCard key={attraction.name} {...attraction} />))}
+        <h1>Universal Orlando Attractions</h1>
+        {loading ? <p>Loading...</p> : attractions.map((attraction) => (<AttractionCard key={attraction.id} {...attraction} />))}
       </section>
       <div className="ticks"></div>
       <section id="spacer"></section>
