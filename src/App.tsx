@@ -9,7 +9,7 @@ const UNIVERSAL_ORLANDO_RESORT = '89db5d43-c434-4097-b71f-f6869f495a22'
 
 function App() {
   const [catalog, setCatalog] = useState<AttractionCardProps[]>([])
-  const [tracked, setTracked] = useState<string[]>([])
+  const [tracked, setTracked] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   useEffect(() => {
     async function loadAttractions() {
@@ -36,7 +36,7 @@ function App() {
     loadAttractions()
   }, [])
 
-  const trackedAttractions = tracked
+  const trackedAttractions = [...tracked]
     .map((id) => catalog.find((a) => a.id === id))
     .filter((a): a is AttractionCardProps => a !== undefined)
 
@@ -54,7 +54,7 @@ function App() {
         <h1>Universal Orlando Attractions</h1>
         <AttractionPicker
           options={pickerOptions}
-          onAdd={(id) => setTracked(prev => prev.includes(id) ? prev : [...prev, id])}
+          onAdd={(id) => setTracked(prev => prev.has(id) ? prev : new Set(prev).add(id))}
         />
         {loading ? (
           <p>Loading...</p>
@@ -65,7 +65,11 @@ function App() {
             <AttractionCard
               key={attraction.id}
               {...attraction}
-              onRemove={() => setTracked(prev => prev.filter((trackedId) => trackedId !== attraction.id))}
+              onRemove={() => setTracked(prev => {
+                const next = new Set(prev)
+                next.delete(attraction.id)
+                return next
+              })}
             />
           ))
         )}
