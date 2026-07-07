@@ -6,16 +6,29 @@ import AttractionCard from './AttractionCard'
 import AttractionPicker from './AttractionPicker'
 
 const UNIVERSAL_ORLANDO_RESORT = '89db5d43-c434-4097-b71f-f6869f495a22'
+const TRACKED_STORAGE_KEY = 'trackedAttractionIds'
 
 function App() {
   const [catalog, setCatalog] = useState<AttractionCardProps[]>([])
-  const [tracked, setTracked] = useState<Set<string>>(new Set())
+  // Get tracked attractions from local storage to persist on refresh
+  const [tracked, setTracked] = useState<Set<string>>(() => {
+    const raw = localStorage.getItem(TRACKED_STORAGE_KEY)
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set()
+  })
   const [loading, setLoading] = useState(true)
+
   useEffect(() => {
     async function loadAttractions() {
       try {
         setLoading(true)
-        const tp = new ThemeParks({ fetch: (...args) => fetch(...args) });
+        const tp = new ThemeParks({
+          fetch: (input, init) => {
+            // CORS bug for front end request to themeparks API
+            const headers = { ...init?.headers }
+            delete headers['user-agent']
+            return fetch(input, { ...init, headers })
+          },
+        });
         const live = await tp.entity(UNIVERSAL_ORLANDO_RESORT).live();
         const attractions = (live.liveData ?? [])
           .filter((entry) => entry.entityType === 'ATTRACTION')
@@ -35,6 +48,11 @@ function App() {
     }
     loadAttractions()
   }, [])
+
+  // Runs whenever `tracked` changes, persisting the current set of IDs.
+  useEffect(() => {
+    localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify([...tracked]))
+  }, [tracked])
 
   const trackedAttractions = [...tracked]
     .map((id) => catalog.find((a) => a.id === id))
