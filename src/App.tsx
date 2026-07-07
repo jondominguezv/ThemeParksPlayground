@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { ThemeParks, currentWaitTime } from 'themeparks';
 import './App.css'
 import type { AttractionCardProps } from './AttractionCard'
@@ -7,6 +7,7 @@ import AttractionPicker from './AttractionPicker'
 
 const UNIVERSAL_ORLANDO_RESORT = '89db5d43-c434-4097-b71f-f6869f495a22'
 const TRACKED_STORAGE_KEY = 'trackedAttractionIds'
+const REFRESH_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
 
 function App() {
   const [catalog, setCatalog] = useState<AttractionCardProps[]>([])
@@ -17,37 +18,40 @@ function App() {
   })
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function loadAttractions() {
-      try {
-        setLoading(true)
-        const tp = new ThemeParks({
-          fetch: (input, init) => {
-            // CORS bug for front end request to themeparks API
-            const headers = { ...init?.headers }
-            delete headers['user-agent']
-            return fetch(input, { ...init, headers })
-          },
-        });
-        const live = await tp.entity(UNIVERSAL_ORLANDO_RESORT).live();
-        const attractions = (live.liveData ?? [])
-          .filter((entry) => entry.entityType === 'ATTRACTION')
-          .map((entry) => ({
-            id: entry.id,
-            name: entry.name,
-            status: entry.status ?? 'UNKNOWN',
-            waitTime: currentWaitTime(entry) ?? 0,
-          }))
-        setCatalog(attractions)
-      } catch (err) {
-        // TODO: Add real error handling
-        console.log(`Error loading attractions: ${err}`);
-      } finally {
-        setLoading(false)
-      }
+  const loadAttractions = useCallback(async () => {
+    try {
+      setLoading(true)
+      const tp = new ThemeParks({
+        fetch: (input, init) => {
+          // CORS bug for front end request to themeparks API
+          const headers = { ...init?.headers }
+          delete headers['user-agent']
+          return fetch(input, { ...init, headers })
+        },
+      });
+      const live = await tp.entity(UNIVERSAL_ORLANDO_RESORT).live();
+      const attractions = (live.liveData ?? [])
+        .filter((entry) => entry.entityType === 'ATTRACTION')
+        .map((entry) => ({
+          id: entry.id,
+          name: entry.name,
+          status: entry.status ?? 'UNKNOWN',
+          waitTime: currentWaitTime(entry) ?? 0,
+        }))
+      setCatalog(attractions)
+    } catch (err) {
+      // TODO: Add real error handling
+      console.log(`Error loading attractions: ${err}`);
+    } finally {
+      setLoading(false)
     }
-    loadAttractions()
   }, [])
+
+  useEffect(() => {
+    loadAttractions()
+    const intervalId = setInterval(loadAttractions, REFRESH_INTERVAL_MS)
+    return () => clearInterval(intervalId)
+  }, [loadAttractions])
 
   // Runs whenever `tracked` changes, persisting the current set of IDs.
   useEffect(() => {
