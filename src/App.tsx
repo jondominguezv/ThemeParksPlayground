@@ -14,7 +14,11 @@ function App() {
   // Get tracked attractions from local storage to persist on refresh
   const [tracked, setTracked] = useState<Set<string>>(() => {
     const raw = localStorage.getItem(TRACKED_STORAGE_KEY)
-    return raw ? new Set(JSON.parse(raw) as string[]) : new Set()
+    try {
+      return raw ? new Set(JSON.parse(raw) as string[]) : new Set()
+    } catch {
+      return new Set()
+    }
   })
   const [loading, setLoading] = useState(true)
 
