@@ -68,9 +68,12 @@ function App() {
     localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify([...tracked]))
   }, [tracked])
 
-  const trackedAttractions = [...tracked]
-    .map((id) => catalog.find((a) => a.id === id))
-    .filter((a): a is AttractionCardProps => a !== undefined)
+  const trackedAttractions = useMemo(
+    () => [...tracked]
+      .map((id) => catalog.find((a) => a.id === id))
+      .filter((a): a is AttractionCardProps => a !== undefined),
+    [tracked, catalog]
+  )
 
   const pickerOptions = useMemo(
     () => catalog
