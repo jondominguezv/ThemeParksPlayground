@@ -74,6 +74,9 @@ function App() {
       <div className="ticks"></div>
       <section id="attractions">
         <h1>Universal Orlando Attractions</h1>
+        <button onClick={loadAttractions} disabled={loading}>
+          {loading ? 'Refreshing...' : 'Refresh Now'}
+        </button>
         <AttractionPicker
           options={pickerOptions}
           onAdd={(id) => setTracked(prev => prev.has(id) ? prev : new Set(prev).add(id))}
