@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { ThemeParks, currentWaitTime } from 'themeparks';
 import './App.css'
 import type { AttractionCardProps } from './AttractionCard'
@@ -6,39 +6,74 @@ import AttractionCard from './AttractionCard'
 import AttractionPicker from './AttractionPicker'
 
 const UNIVERSAL_ORLANDO_RESORT = '89db5d43-c434-4097-b71f-f6869f495a22'
+const TRACKED_STORAGE_KEY = 'trackedAttractionIds'
+const REFRESH_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
+
+// CORS bug for front end request to themeparks API
+const themeParksOptions: ConstructorParameters<typeof ThemeParks>[0] = {
+  fetch: (input, init) => {
+    const headers = { ...init?.headers }
+    delete headers['user-agent']
+    return fetch(input, { ...init, headers })
+  },
+}
+const tp = new ThemeParks(themeParksOptions)
 
 function App() {
   const [catalog, setCatalog] = useState<AttractionCardProps[]>([])
-  const [tracked, setTracked] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState(true)
-  useEffect(() => {
-    async function loadAttractions() {
-      try {
-        setLoading(true)
-        const tp = new ThemeParks({ fetch: (...args) => fetch(...args) });
-        const live = await tp.entity(UNIVERSAL_ORLANDO_RESORT).live();
-        const attractions = (live.liveData ?? [])
-          .filter((entry) => entry.entityType === 'ATTRACTION')
-          .map((entry) => ({
-            id: entry.id,
-            name: entry.name,
-            status: entry.status ?? 'UNKNOWN',
-            waitTime: currentWaitTime(entry) ?? 0,
-          }))
-        setCatalog(attractions)
-      } catch (err) {
-        // TODO: Add real error handling
-        console.log(`Error loading attractions: ${err}`);
-      } finally {
-        setLoading(false)
-      }
+  // Get tracked attractions from local storage to persist on refresh
+  const [tracked, setTracked] = useState<Set<string>>(() => {
+    const raw = localStorage.getItem(TRACKED_STORAGE_KEY)
+    try {
+      return raw ? new Set(JSON.parse(raw) as string[]) : new Set()
+    } catch {
+      return new Set()
     }
-    loadAttractions()
+  })
+  const [loading, setLoading] = useState(true)
+  const isFetchingRef = useRef(false)
+
+  const loadAttractions = useCallback(async () => {
+    if (isFetchingRef.current) return
+    isFetchingRef.current = true
+    try {
+      setLoading(true)
+      const live = await tp.entity(UNIVERSAL_ORLANDO_RESORT).live();
+      const attractions = (live.liveData ?? [])
+        .filter((entry) => entry.entityType === 'ATTRACTION')
+        .map((entry) => ({
+          id: entry.id,
+          name: entry.name,
+          status: entry.status ?? 'UNKNOWN',
+          waitTime: currentWaitTime(entry) ?? 0,
+        }))
+      setCatalog(attractions)
+    } catch (err) {
+      // TODO: Add real error handling
+      console.log(`Error loading attractions: ${err}`);
+    } finally {
+      setLoading(false)
+      isFetchingRef.current = false
+    }
   }, [])
 
-  const trackedAttractions = [...tracked]
-    .map((id) => catalog.find((a) => a.id === id))
-    .filter((a): a is AttractionCardProps => a !== undefined)
+  useEffect(() => {
+    loadAttractions()
+    const intervalId = setInterval(loadAttractions, REFRESH_INTERVAL_MS)
+    return () => clearInterval(intervalId)
+  }, [loadAttractions])
+
+  // Runs whenever `tracked` changes, persisting the current set of IDs.
+  useEffect(() => {
+    localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify([...tracked]))
+  }, [tracked])
+
+  const trackedAttractions = useMemo(
+    () => [...tracked]
+      .map((id) => catalog.find((a) => a.id === id))
+      .filter((a): a is AttractionCardProps => a !== undefined),
+    [tracked, catalog]
+  )
 
   const pickerOptions = useMemo(
     () => catalog
@@ -52,11 +87,14 @@ function App() {
       <div className="ticks"></div>
       <section id="attractions">
         <h1>Universal Orlando Attractions</h1>
+        <button onClick={loadAttractions} disabled={loading}>
+          {loading ? 'Refreshing...' : 'Refresh Now'}
+        </button>
         <AttractionPicker
           options={pickerOptions}
           onAdd={(id) => setTracked(prev => prev.has(id) ? prev : new Set(prev).add(id))}
         />
-        {loading ? (
+        {loading && catalog.length === 0 ? (
           <p>Loading...</p>
         ) : trackedAttractions.length === 0 ? (
           <p>No attractions tracked yet, add one above.</p>
