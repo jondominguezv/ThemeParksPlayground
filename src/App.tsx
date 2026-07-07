@@ -81,7 +81,7 @@ function App() {
           options={pickerOptions}
           onAdd={(id) => setTracked(prev => prev.has(id) ? prev : new Set(prev).add(id))}
         />
-        {loading ? (
+        {loading && catalog.length === 0 ? (
           <p>Loading...</p>
         ) : trackedAttractions.length === 0 ? (
           <p>No attractions tracked yet, add one above.</p>
