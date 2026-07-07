@@ -9,6 +9,16 @@ const UNIVERSAL_ORLANDO_RESORT = '89db5d43-c434-4097-b71f-f6869f495a22'
 const TRACKED_STORAGE_KEY = 'trackedAttractionIds'
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
 
+// CORS bug for front end request to themeparks API
+const themeParksOptions: ConstructorParameters<typeof ThemeParks>[0] = {
+  fetch: (input, init) => {
+    const headers = { ...init?.headers }
+    delete headers['user-agent']
+    return fetch(input, { ...init, headers })
+  },
+}
+const tp = new ThemeParks(themeParksOptions)
+
 function App() {
   const [catalog, setCatalog] = useState<AttractionCardProps[]>([])
   // Get tracked attractions from local storage to persist on refresh
@@ -28,14 +38,6 @@ function App() {
     isFetchingRef.current = true
     try {
       setLoading(true)
-      const tp = new ThemeParks({
-        fetch: (input, init) => {
-          // CORS bug for front end request to themeparks API
-          const headers = { ...init?.headers }
-          delete headers['user-agent']
-          return fetch(input, { ...init, headers })
-        },
-      });
       const live = await tp.entity(UNIVERSAL_ORLANDO_RESORT).live();
       const attractions = (live.liveData ?? [])
         .filter((entry) => entry.entityType === 'ATTRACTION')
