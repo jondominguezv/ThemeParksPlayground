@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { ThemeParks, currentWaitTime } from 'themeparks';
 import './App.css'
 import type { AttractionCardProps } from './AttractionCard'
@@ -21,8 +21,11 @@ function App() {
     }
   })
   const [loading, setLoading] = useState(true)
+  const isFetchingRef = useRef(false)
 
   const loadAttractions = useCallback(async () => {
+    if (isFetchingRef.current) return
+    isFetchingRef.current = true
     try {
       setLoading(true)
       const tp = new ThemeParks({
@@ -48,6 +51,7 @@ function App() {
       console.log(`Error loading attractions: ${err}`);
     } finally {
       setLoading(false)
+      isFetchingRef.current = false
     }
   }, [])
 
