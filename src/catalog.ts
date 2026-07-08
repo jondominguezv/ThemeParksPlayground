@@ -82,8 +82,15 @@ async function loadDestinationCatalog(destination: Destination): Promise<Catalog
 }
 
 export async function loadCatalog(): Promise<CatalogEntry[]> {
-    const catalogsByDestination = await Promise.all(
+    const results = await Promise.allSettled(
         ORLANDO_DESTINATIONS.map(loadDestinationCatalog)
     )
-    return catalogsByDestination.flat()
+
+    return results.flatMap((result, i) => {
+        if (result.status === 'rejected') {
+            console.error(`Failed to load ${ORLANDO_DESTINATIONS[i].name}:`, result.reason)
+            return []
+        }
+        return result.value
+    })
 }
