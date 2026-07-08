@@ -27,4 +27,4 @@ dist-ssr
 *.sw?
 
 # Local notes
-MILESTONES.md
+MILESTONES*.md
