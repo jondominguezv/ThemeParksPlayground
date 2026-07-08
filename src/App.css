@@ -161,6 +161,110 @@
   }
 }
 
+#attractions {
+  padding: 32px 20px;
+  text-align: center;
+}
+
+/* Flexbox: one row of items (picker + button) that should align
+   and space out along a single axis. */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+/* Grid: cards should auto-wrap into as many columns as fit,
+   both filling the row and growing/shrinking with the viewport. */
+.attraction-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+/* Empty-state/error messages are single grid items — let them
+   span every column instead of squeezing into one card-sized cell. */
+.attraction-grid > p {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 0;
+}
+
+.attraction-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  text-align: center;
+  background: var(--bg);
+}
+
+.attraction-card h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-h);
+}
+
+.attraction-card button {
+  align-self: center;
+  margin-top: 4px;
+}
+
+.wait-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.wait-badge--short {
+  color: var(--wait-short);
+  background: var(--wait-short-bg);
+}
+
+.wait-badge--moderate {
+  color: var(--wait-moderate);
+  background: var(--wait-moderate-bg);
+}
+
+.wait-badge--long {
+  color: var(--wait-long);
+  background: var(--wait-long-bg);
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 4px;
+  background: var(--border);
+  margin: 10px 0;
+  animation: skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+.skeleton-title {
+  height: 18px;
+  width: 60%;
+}
+
+.skeleton-short {
+  width: 40%;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .ticks {
   position: relative;
   width: 100%;
