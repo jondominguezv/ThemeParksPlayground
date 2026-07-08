@@ -225,18 +225,18 @@
 }
 
 .wait-badge--short {
-  color: #16a34a;
-  background: rgba(22, 163, 74, 0.15);
+  color: var(--wait-short);
+  background: var(--wait-short-bg);
 }
 
 .wait-badge--moderate {
-  color: #d97706;
-  background: rgba(217, 119, 6, 0.15);
+  color: var(--wait-moderate);
+  background: var(--wait-moderate-bg);
 }
 
 .wait-badge--long {
-  color: #dc2626;
-  background: rgba(220, 38, 38, 0.15);
+  color: var(--wait-long);
+  background: var(--wait-long-bg);
 }
 
 .skeleton-line {
