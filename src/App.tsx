@@ -67,7 +67,7 @@ function App() {
     <>
       <div className="ticks"></div>
       <section id="attractions">
-        <h1>Universal Orlando Attractions</h1>
+        <h1>Orlando Attractions</h1>
         <div className="toolbar">
           <AttractionPicker
             options={pickerOptions}
