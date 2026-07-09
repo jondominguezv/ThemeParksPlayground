@@ -56,14 +56,21 @@ function buildParkIndex(children: EntityChild[]): Map<string, { parkId: string; 
     return index
 }
 
-async function loadDestinationCatalog(destination: Destination): Promise<CatalogEntry[]> {
+async function loadDestinationChildren(destination: Destination): Promise<EntityChild[]> {
     const children: EntityChild[] = []
     for await (const child of tp.entity(destination.id).walk()) {
         children.push(child)
     }
+    return children
+}
+
+async function loadDestinationCatalog(destination: Destination): Promise<CatalogEntry[]> {
+    const [children, live] = await Promise.all([
+        loadDestinationChildren(destination),
+        tp.entity(destination.id).live(),
+    ])
     const parkIndex = buildParkIndex(children)
 
-    const live = await tp.entity(destination.id).live()
     return (live.liveData ?? [])
         .filter((entry) => entry.entityType === 'ATTRACTION')
         .map((entry) => {
