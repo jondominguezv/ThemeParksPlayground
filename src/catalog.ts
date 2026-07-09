@@ -36,14 +36,19 @@ export type CatalogEntry = {
 // EntityChild isn't exported by the SDK directly, only the EntityChildren wrapper.
 type EntityChild = NonNullable<EntityChildren['children']>[number]
 
-function buildParkIndex(children: EntityChild[]): Map<string, { parkId: string; parkName: string }> {
+// AttractionID => ParkInfo
+type ParkIndex = Map<string, { parkId: string; parkName: string }>
+
+function buildParkIndex(children: EntityChild[]): ParkIndex {
     const byId = new Map(children.map((c) => [c.id, c]))
-    const index = new Map<string, { parkId: string; parkName: string }>()
+    const index: ParkIndex = new Map()
 
     for (const child of children) {
         if (child.entityType !== 'ATTRACTION') continue
 
         let current: EntityChild | undefined = child
+        // No cycle guard: a self-referencing/circular parentId chain here would
+        // loop forever. Not seen in real data so far.
         while (current && current.entityType !== 'PARK') {
             current = current.parentId ? byId.get(current.parentId) : undefined
         }
@@ -65,6 +70,7 @@ async function loadDestinationChildren(destination: Destination): Promise<Entity
 }
 
 async function loadDestinationCatalog(destination: Destination): Promise<CatalogEntry[]> {
+    // No children caching b/c the themeparks SDK's caches /children by default
     const [children, live] = await Promise.all([
         loadDestinationChildren(destination),
         tp.entity(destination.id).live(),
