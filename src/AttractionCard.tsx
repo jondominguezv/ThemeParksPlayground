@@ -1,9 +1,6 @@
-export type AttractionCardProps = {
-    id: string
-    name: string
-    status: string
-    waitTime: number
-}
+import type { CatalogEntry } from './catalog'
+
+export type AttractionCardProps = Pick<CatalogEntry, 'id' | 'name' | 'status' | 'waitTime'>
 
 type AttractionCardComponentProps = AttractionCardProps & {
     onRemove: () => void
