@@ -74,7 +74,7 @@ function App() {
             onAdd={(id) => setTracked(prev => prev.has(id) ? prev : new Set(prev).add(id))}
           />
           <button onClick={loadAttractions} disabled={loading}>
-            {loading ? 'Refreshing...' : 'Refresh Now'}
+            {loading ? 'Refreshing wait times...' : 'Refresh Wait Times'}
           </button>
         </div>
         <div className="attraction-grid">
