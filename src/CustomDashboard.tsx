@@ -43,7 +43,8 @@ function CustomDashboard({ catalog, tracked, setTracked, loading, onRefresh }: C
               <AttractionCard
                 key={attraction.id}
                 {...attraction}
-                onRemove={() => setTracked(prev => {
+                actionLabel="Remove"
+                onAction={() => setTracked(prev => {
                   const next = new Set(prev)
                   next.delete(attraction.id)
                   return next
