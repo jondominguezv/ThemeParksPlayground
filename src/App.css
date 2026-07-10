@@ -194,7 +194,7 @@
   position: sticky;
   top: var(--nav-height);
   z-index: 9;
-  background: var(--bg);
+  background: var(--page-header-bg);
   padding-top: 16px;
 }
 
@@ -240,12 +240,12 @@
 .park-heading {
   position: sticky;
   margin: 0;
-  background: var(--bg);
 }
 
 .destination-heading {
   z-index: 8;
   padding: 8px 0;
+  background: var(--destination-heading-bg);
 }
 
 .park-group {
@@ -255,6 +255,7 @@
 .park-heading {
   z-index: 7;
   padding: 4px 0;
+  background: var(--park-heading-bg);
 }
 
 /* Display as plain text */
@@ -281,6 +282,15 @@
   gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 24px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--toolbar-bg);
+}
+
+/* Zeroed, not shrunk: would collapse through page-header's unpadded bottom edge otherwise */
+#browse .toolbar {
+  margin-bottom: 0;
+  border-radius: 8px 8px 0 0; /* flush against destination-heading below */
 }
 
 /* Grid: cards should auto-wrap into as many columns as fit,
