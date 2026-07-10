@@ -257,6 +257,12 @@
   padding: 4px 0;
 }
 
+/* Display as plain text */
+.heading-toggle {
+  all: unset;
+  cursor: pointer;
+}
+
 .browse-list {
   list-style: none;
   padding: 0;

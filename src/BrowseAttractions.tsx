@@ -11,8 +11,18 @@ type BrowseAttractionsProps = {
 }
 
 const UNGROUPED_PARK_LABEL = 'Other'
+const COLLAPSED_DESTINATIONS_STORAGE_KEY = 'collapsedDestinationNames'
 
 type SortOption = 'name' | 'waitTime-desc' | 'waitTime-asc' | 'status'
+
+function loadPersistedSet(storageKey: string): Set<string> {
+  const raw = localStorage.getItem(storageKey)
+  try {
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set()
+  } catch {
+    return new Set()
+  }
+}
 
 function groupByDestinationAndPark(catalog: CatalogEntry[]): Map<string, Map<string, CatalogEntry[]>> {
   const groups = new Map<string, Map<string, CatalogEntry[]>>()
@@ -56,11 +66,13 @@ type DestinationGroupProps = {
   pageHeaderHeight: number
   tracked: Set<string>
   setTracked: Dispatch<SetStateAction<Set<string>>>
+  isCollapsed: boolean
+  onToggleCollapse: () => void
 }
 
 // Each destination measures its own heading height rather than assuming
 // every destination's heading renders at the same size.
-function DestinationGroup({ destinationName, parks, sortBy, pageHeaderHeight, tracked, setTracked }: DestinationGroupProps) {
+function DestinationGroup({ destinationName, parks, sortBy, pageHeaderHeight, tracked, setTracked, isCollapsed, onToggleCollapse }: DestinationGroupProps) {
   const [headingRef, headingHeight] = useElementHeight<HTMLHeadingElement>()
 
   const sortedParks = useMemo(() => {
@@ -78,9 +90,11 @@ function DestinationGroup({ destinationName, parks, sortBy, pageHeaderHeight, tr
         ref={headingRef}
         style={{ top: `calc(var(--nav-height) + ${pageHeaderHeight}px)` }}
       >
-        {destinationName}
+        <button type="button" className="heading-toggle" aria-expanded={!isCollapsed} onClick={onToggleCollapse}>
+          {destinationName}
+        </button>
       </h2>
-      {[...sortedParks.entries()].map(([parkName, attractions]) => (
+      {!isCollapsed && [...sortedParks.entries()].map(([parkName, attractions]) => (
         <div key={parkName} className="park-group">
           <h3
             className="park-heading"
@@ -113,6 +127,17 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
   const [isDestinationMenuOpen, setIsDestinationMenuOpen] = useState(false)
   const destinationMenuRef = useRef<HTMLDivElement>(null)
   const [pageHeaderRef, pageHeaderHeight] = useElementHeight<HTMLDivElement>()
+  const [collapsedDestinations, setCollapsedDestinations] = useState<Set<string>>(
+    () => loadPersistedSet(COLLAPSED_DESTINATIONS_STORAGE_KEY)
+  )
+
+  useEffect(() => {
+    localStorage.setItem(COLLAPSED_DESTINATIONS_STORAGE_KEY, JSON.stringify([...collapsedDestinations]))
+  }, [collapsedDestinations])
+
+  const toggleDestinationCollapse = (name: string) => {
+    setCollapsedDestinations(prev => withToggled(prev, name))
+  }
 
   // Derived from the data itself rather than hardcoded to easily support future destinations
   // Available destinations are in ORLANDO_DESTINATIONS in catalog.ts
@@ -216,6 +241,8 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
           pageHeaderHeight={pageHeaderHeight}
           tracked={tracked}
           setTracked={setTracked}
+          isCollapsed={collapsedDestinations.has(destinationName)}
+          onToggleCollapse={() => toggleDestinationCollapse(destinationName)}
         />
       ))}
     </section>
