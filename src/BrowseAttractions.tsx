@@ -1,4 +1,4 @@
-import { useMemo, type Dispatch, type SetStateAction } from 'react'
+import { useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 import type { CatalogEntry } from './catalog'
 
 type BrowseAttractionsProps = {
@@ -8,6 +8,8 @@ type BrowseAttractionsProps = {
 }
 
 const UNGROUPED_PARK_LABEL = 'Other'
+
+type SortOption = 'name' | 'waitTime-desc' | 'waitTime-asc' | 'status'
 
 function groupByDestinationAndPark(catalog: CatalogEntry[]): Map<string, Map<string, CatalogEntry[]>> {
   const groups = new Map<string, Map<string, CatalogEntry[]>>()
@@ -29,12 +31,36 @@ function groupByDestinationAndPark(catalog: CatalogEntry[]): Map<string, Map<str
   return groups
 }
 
+// Returns a new sorted array; never mutates the array it's given.
+function sortAttractions(attractions: CatalogEntry[], sortBy: SortOption): CatalogEntry[] {
+  const sorted = [...attractions]
+  switch (sortBy) {
+    case 'name':
+      return sorted.sort((a, b) => a.name.localeCompare(b.name))
+    case 'waitTime-desc':
+      return sorted.sort((a, b) => b.waitTime - a.waitTime)
+    case 'waitTime-asc':
+      return sorted.sort((a, b) => a.waitTime - b.waitTime)
+    case 'status':
+      return sorted.sort((a, b) => a.status.localeCompare(b.status))
+  }
+}
+
 function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsProps) {
   const groups = useMemo(() => groupByDestinationAndPark(catalog), [catalog])
+  const [sortBy, setSortBy] = useState<SortOption>('name')
 
   return (
     <section id="browse">
       <h1>Browse All Attractions</h1>
+      <div className="toolbar">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}>
+          <option value="name">Name (A–Z)</option>
+          <option value="waitTime-desc">Wait time (high→low)</option>
+          <option value="waitTime-asc">Wait time (low→high)</option>
+          <option value="status">Status</option>
+        </select>
+      </div>
       {[...groups.entries()].map(([destinationName, parks]) => (
         <div key={destinationName} className="destination-group">
           <h2>{destinationName}</h2>
@@ -42,7 +68,7 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
             <div key={parkName} className="park-group">
               <h3>{parkName}</h3>
               <ul className="browse-list">
-                {attractions.map((attraction) => (
+                {sortAttractions(attractions, sortBy).map((attraction) => (
                   <li key={attraction.id}>
                     <span className="browse-list__name">{attraction.name}</span>
                     <span>Status: {attraction.status}</span>
