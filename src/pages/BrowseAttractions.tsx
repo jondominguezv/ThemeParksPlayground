@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import AttractionCard from '../components/AttractionCard'
+import SkeletonCard from '../components/SkeletonCard'
 import { useClickOutside } from '../hooks/useClickOutside'
 import { useElementHeight } from '../hooks/useElementHeight'
 import { withToggled } from '../utils/setUtils'
@@ -9,6 +10,7 @@ type BrowseAttractionsProps = {
   catalog: CatalogEntry[]
   tracked: Set<string>
   onTrack: (id: string) => void
+  loading: boolean
 }
 
 const UNGROUPED_PARK_LABEL = 'Other'
@@ -137,7 +139,7 @@ function DestinationGroup({ destinationName, parks, sortBy, pageHeaderHeight, tr
   )
 }
 
-function BrowseAttractions({ catalog, tracked, onTrack }: BrowseAttractionsProps) {
+function BrowseAttractions({ catalog, tracked, onTrack, loading }: BrowseAttractionsProps) {
   const [sortBy, setSortBy] = useState<SortOption>('name')
   const [excludedDestinations, setExcludedDestinations] = useState<Set<string>>(new Set())
   const [statusFilter, setStatusFilter] = useState('all')
@@ -251,22 +253,29 @@ function BrowseAttractions({ catalog, tracked, onTrack }: BrowseAttractionsProps
           </div>
         </div>
       </div>
-      {groups.size === 0 && <p>No attractions match your filters.</p>}
-      {[...groups.entries()].map(([destinationName, parks]) => (
-        <DestinationGroup
-          key={destinationName}
-          destinationName={destinationName}
-          parks={parks}
-          sortBy={sortBy}
-          pageHeaderHeight={pageHeaderHeight}
-          tracked={tracked}
-          onTrack={onTrack}
-          isCollapsed={collapsedDestinations.has(destinationName)}
-          onToggleCollapse={() => toggleDestinationCollapse(destinationName)}
-          collapsedParks={collapsedParks}
-          onToggleParkCollapse={toggleParkCollapse}
-        />
-      ))}
+      {loading && catalog.length === 0 ? (
+        <ul className="browse-list">
+          {Array.from({ length: 6 }, (_, i) => <SkeletonCard key={i} />)}
+        </ul>
+      ) : groups.size === 0 ? (
+        <p>No attractions match your filters.</p>
+      ) : (
+        [...groups.entries()].map(([destinationName, parks]) => (
+          <DestinationGroup
+            key={destinationName}
+            destinationName={destinationName}
+            parks={parks}
+            sortBy={sortBy}
+            pageHeaderHeight={pageHeaderHeight}
+            tracked={tracked}
+            onTrack={onTrack}
+            isCollapsed={collapsedDestinations.has(destinationName)}
+            onToggleCollapse={() => toggleDestinationCollapse(destinationName)}
+            collapsedParks={collapsedParks}
+            onToggleParkCollapse={toggleParkCollapse}
+          />
+        ))
+      )}
     </section>
   )
 }

@@ -44,6 +44,7 @@ function App({ loadCatalog = loadCatalogFromApi }: AppProps = {}) {
             catalog={catalog}
             tracked={tracked}
             onTrack={trackAttraction}
+            loading={loading}
           />
         } />
         <Route path="/tracked-attractions" element={
