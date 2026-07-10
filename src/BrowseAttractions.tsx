@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import AttractionCard from './AttractionCard'
 import type { CatalogEntry } from './catalog'
 
 type BrowseAttractionsProps = {
@@ -161,17 +162,12 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
               <ul className="browse-list">
                 {sortAttractions(attractions, sortBy).map((attraction) => (
                   <li key={attraction.id}>
-                    <span className="browse-list__name">{attraction.name}</span>
-                    <span>Status: {attraction.status}</span>
-                    {attraction.status === 'OPERATING' && (
-                      <span>{attraction.waitTime} min</span>
-                    )}
-                    <button
-                      onClick={() => setTracked(prev => prev.has(attraction.id) ? prev : new Set(prev).add(attraction.id))}
-                      disabled={tracked.has(attraction.id)}
-                    >
-                      {tracked.has(attraction.id) ? 'Added' : 'Add to Dashboard'}
-                    </button>
+                    <AttractionCard
+                      {...attraction}
+                      actionLabel={tracked.has(attraction.id) ? 'Added' : 'Add to Dashboard'}
+                      actionDisabled={tracked.has(attraction.id)}
+                      onAction={() => setTracked(prev => prev.has(attraction.id) ? prev : new Set(prev).add(attraction.id))}
+                    />
                   </li>
                 ))}
               </ul>
