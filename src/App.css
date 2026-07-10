@@ -161,7 +161,49 @@
   }
 }
 
-#attractions {
+/* Sticky nav; --nav-height keeps .page-header stacked below it */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  height: var(--nav-height);
+  box-sizing: border-box; /* keeps border inside --nav-height */
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.nav a.active {
+  color: var(--text-h);
+  background: var(--accent-bg);
+}
+
+/* padding-top stops h1's margin collapsing through and hiding under .nav */
+.page-header {
+  position: sticky;
+  top: var(--nav-height);
+  z-index: 9;
+  background: var(--bg);
+  padding-top: 16px;
+}
+
+.page-header h1 {
+  margin-top: 0;
+}
+
+#attractions,
+#browse {
   padding: 32px 20px;
   text-align: center;
 }

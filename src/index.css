@@ -18,6 +18,8 @@
   --wait-long: #dc2626;
   --wait-long-bg: rgba(220, 38, 38, 0.15);
 
+  --nav-height: 56px;
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
