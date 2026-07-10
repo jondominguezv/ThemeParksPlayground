@@ -23,11 +23,13 @@ function CustomDashboard({ catalog, tracked, setTracked, loading, onRefresh }: C
     <>
       <div className="ticks"></div>
       <section id="attractions">
-        <h1>Orlando Attractions</h1>
-        <div className="toolbar">
-          <button onClick={onRefresh} disabled={loading}>
-            {loading ? 'Refreshing wait times...' : 'Refresh Wait Times'}
-          </button>
+        <div className="page-header">
+          <h1>Orlando Attractions</h1>
+          <div className="toolbar">
+            <button onClick={onRefresh} disabled={loading}>
+              {loading ? 'Refreshing wait times...' : 'Refresh Wait Times'}
+            </button>
+          </div>
         </div>
         <div className="attraction-grid">
           {loading && catalog.length === 0 ? (

@@ -86,26 +86,28 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
 
   return (
     <section id="browse">
-      <h1>Browse All Attractions</h1>
-      <div className="toolbar">
-        <input
-          type="text"
-          placeholder="Search by name…"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="all">All Statuses</option>
-          {statusOptions.map((status) => (
-            <option key={status} value={status}>{status}</option>
-          ))}
-        </select>
-        <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}>
-          <option value="name">Name (A–Z)</option>
-          <option value="waitTime-desc">Wait time (high→low)</option>
-          <option value="waitTime-asc">Wait time (low→high)</option>
-          <option value="status">Status</option>
-        </select>
+      <div className="page-header">
+        <h1>Browse All Attractions</h1>
+        <div className="toolbar">
+          <input
+            type="text"
+            placeholder="Search by name…"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="all">All Statuses</option>
+            {statusOptions.map((status) => (
+              <option key={status} value={status}>{status}</option>
+            ))}
+          </select>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}>
+            <option value="name">Name (A–Z)</option>
+            <option value="waitTime-desc">Wait time (high→low)</option>
+            <option value="waitTime-asc">Wait time (low→high)</option>
+            <option value="status">Status</option>
+          </select>
+        </div>
       </div>
       <fieldset className="destination-filter">
         <legend>Destinations</legend>
