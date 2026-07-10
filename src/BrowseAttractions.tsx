@@ -12,6 +12,7 @@ type BrowseAttractionsProps = {
 
 const UNGROUPED_PARK_LABEL = 'Other'
 const COLLAPSED_DESTINATIONS_STORAGE_KEY = 'collapsedDestinationNames'
+const COLLAPSED_PARKS_STORAGE_KEY = 'collapsedParkKeys'
 
 type SortOption = 'name' | 'waitTime-desc' | 'waitTime-asc' | 'status'
 
@@ -68,11 +69,13 @@ type DestinationGroupProps = {
   setTracked: Dispatch<SetStateAction<Set<string>>>
   isCollapsed: boolean
   onToggleCollapse: () => void
+  collapsedParks: Set<string>
+  onToggleParkCollapse: (parkKey: string) => void
 }
 
 // Each destination measures its own heading height rather than assuming
 // every destination's heading renders at the same size.
-function DestinationGroup({ destinationName, parks, sortBy, pageHeaderHeight, tracked, setTracked, isCollapsed, onToggleCollapse }: DestinationGroupProps) {
+function DestinationGroup({ destinationName, parks, sortBy, pageHeaderHeight, tracked, setTracked, isCollapsed, onToggleCollapse, collapsedParks, onToggleParkCollapse }: DestinationGroupProps) {
   const [headingRef, headingHeight] = useElementHeight<HTMLHeadingElement>()
 
   const sortedParks = useMemo(() => {
@@ -94,27 +97,41 @@ function DestinationGroup({ destinationName, parks, sortBy, pageHeaderHeight, tr
           {destinationName}
         </button>
       </h2>
-      {!isCollapsed && [...sortedParks.entries()].map(([parkName, attractions]) => (
-        <div key={parkName} className="park-group">
-          <h3
-            className="park-heading"
-            style={{ top: `calc(var(--nav-height) + ${pageHeaderHeight}px + ${headingHeight}px)` }}
-          >
-            {parkName}
-          </h3>
-          <ul className="browse-list">
-            {attractions.map((attraction) => (
-              <li key={attraction.id}>
-                <AttractionCard
-                  {...attraction}
-                  variant={tracked.has(attraction.id) ? 'added' : 'add'}
-                  onAction={() => setTracked(prev => withAdded(prev, attraction.id))}
-                />
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+      {!isCollapsed && [...sortedParks.entries()].map(([parkName, attractions]) => {
+        const parkKey = `${destinationName}::${parkName}`
+        const isParkCollapsed = collapsedParks.has(parkKey)
+
+        return (
+          <div key={parkName} className="park-group">
+            <h3
+              className="park-heading"
+              style={{ top: `calc(var(--nav-height) + ${pageHeaderHeight}px + ${headingHeight}px)` }}
+            >
+              <button
+                type="button"
+                className="heading-toggle"
+                aria-expanded={!isParkCollapsed}
+                onClick={() => onToggleParkCollapse(parkKey)}
+              >
+                {parkName}
+              </button>
+            </h3>
+            {!isParkCollapsed && (
+              <ul className="browse-list">
+                {attractions.map((attraction) => (
+                  <li key={attraction.id}>
+                    <AttractionCard
+                      {...attraction}
+                      variant={tracked.has(attraction.id) ? 'added' : 'add'}
+                      onAction={() => setTracked(prev => withAdded(prev, attraction.id))}
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -137,6 +154,18 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
 
   const toggleDestinationCollapse = (name: string) => {
     setCollapsedDestinations(prev => withToggled(prev, name))
+  }
+
+  const [collapsedParks, setCollapsedParks] = useState<Set<string>>(
+    () => loadPersistedSet(COLLAPSED_PARKS_STORAGE_KEY)
+  )
+
+  useEffect(() => {
+    localStorage.setItem(COLLAPSED_PARKS_STORAGE_KEY, JSON.stringify([...collapsedParks]))
+  }, [collapsedParks])
+
+  const toggleParkCollapse = (parkKey: string) => {
+    setCollapsedParks(prev => withToggled(prev, parkKey))
   }
 
   // Derived from the data itself rather than hardcoded to easily support future destinations
@@ -243,6 +272,8 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
           setTracked={setTracked}
           isCollapsed={collapsedDestinations.has(destinationName)}
           onToggleCollapse={() => toggleDestinationCollapse(destinationName)}
+          collapsedParks={collapsedParks}
+          onToggleParkCollapse={toggleParkCollapse}
         />
       ))}
     </section>
