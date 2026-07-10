@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import AttractionCard from './AttractionCard'
-import SkeletonCard from './SkeletonCard'
-import type { CatalogEntry } from './catalog'
+import AttractionCard from '../components/AttractionCard'
+import SkeletonCard from '../components/SkeletonCard'
+import type { CatalogEntry } from '../api/catalog'
 
 type CustomDashboardProps = {
   catalog: CatalogEntry[]

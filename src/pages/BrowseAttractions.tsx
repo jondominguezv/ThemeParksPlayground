@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import AttractionCard from './AttractionCard'
-import { useClickOutside } from './useClickOutside'
-import { useElementHeight } from './useElementHeight'
-import { withToggled } from './setUtils'
-import type { CatalogEntry } from './catalog'
+import AttractionCard from '../components/AttractionCard'
+import { useClickOutside } from '../hooks/useClickOutside'
+import { useElementHeight } from '../hooks/useElementHeight'
+import { withToggled } from '../utils/setUtils'
+import type { CatalogEntry } from '../api/catalog'
 
 type BrowseAttractionsProps = {
   catalog: CatalogEntry[]

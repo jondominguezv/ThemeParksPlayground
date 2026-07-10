@@ -1,4 +1,4 @@
-import type { CatalogEntry } from './catalog'
+import type { CatalogEntry } from '../api/catalog'
 
 export type AttractionCardProps = Pick<CatalogEntry, 'id' | 'name' | 'status' | 'waitTime'>
 
