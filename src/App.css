@@ -236,8 +236,24 @@
   margin-bottom: 40px;
 }
 
+.destination-heading {
+  position: sticky;
+  z-index: 8;
+  margin: 0;
+  padding: 8px 0;
+  background: var(--bg);
+}
+
 .park-group {
   margin-bottom: 24px;
+}
+
+.park-heading {
+  position: sticky;
+  z-index: 7;
+  margin: 0;
+  padding: 4px 0;
+  background: var(--bg);
 }
 
 .browse-list {

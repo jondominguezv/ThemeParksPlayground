@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import AttractionCard from './AttractionCard'
+import { useElementHeight } from './useElementHeight'
 import type { CatalogEntry } from './catalog'
 
 type BrowseAttractionsProps = {
@@ -54,6 +55,8 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
   const [searchText, setSearchText] = useState('')
   const [isDestinationMenuOpen, setIsDestinationMenuOpen] = useState(false)
   const destinationMenuRef = useRef<HTMLDivElement>(null)
+  const [pageHeaderRef, pageHeaderHeight] = useElementHeight<HTMLDivElement>()
+  const [destinationHeadingRef, destinationHeadingHeight] = useElementHeight<HTMLHeadingElement>()
 
   // Derived from the data itself rather than hardcoded to easily support future destinations
   // Available destinations are in ORLANDO_DESTINATIONS in catalog.ts
@@ -106,7 +109,7 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
 
   return (
     <section id="browse">
-      <div className="page-header">
+      <div className="page-header" ref={pageHeaderRef}>
         <h1>Browse All Attractions</h1>
         <div className="toolbar">
           <input
@@ -153,12 +156,23 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
         </div>
       </div>
       {groups.size === 0 && <p>No attractions match your filters.</p>}
-      {[...groups.entries()].map(([destinationName, parks]) => (
+      {[...groups.entries()].map(([destinationName, parks], index) => (
         <div key={destinationName} className="destination-group">
-          <h2>{destinationName}</h2>
+          <h2
+            className="destination-heading"
+            ref={index === 0 ? destinationHeadingRef : undefined}
+            style={{ top: `calc(var(--nav-height) + ${pageHeaderHeight}px)` }}
+          >
+            {destinationName}
+          </h2>
           {[...parks.entries()].map(([parkName, attractions]) => (
             <div key={parkName} className="park-group">
-              <h3>{parkName}</h3>
+              <h3
+                className="park-heading"
+                style={{ top: `calc(var(--nav-height) + ${pageHeaderHeight}px + ${destinationHeadingHeight}px)` }}
+              >
+                {parkName}
+              </h3>
               <ul className="browse-list">
                 {sortAttractions(attractions, sortBy).map((attraction) => (
                   <li key={attraction.id}>
