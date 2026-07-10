@@ -24,7 +24,7 @@ function CustomDashboard({ catalog, tracked, setTracked, loading, onRefresh }: C
       <div className="ticks"></div>
       <section id="attractions">
         <div className="page-header">
-          <h1>Orlando Attractions</h1>
+          <h1>Tracked Attractions</h1>
           <div className="toolbar">
             <button onClick={onRefresh} disabled={loading}>
               {loading ? 'Refreshing wait times...' : 'Refresh Wait Times'}
