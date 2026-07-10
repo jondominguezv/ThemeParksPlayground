@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { CatalogEntry } from './catalog'
+import type { CatalogEntry } from '../api/catalog'
 
 // Fetches the catalog on mount and on a fixed interval, exposing loading
 // state and a manual refresh trigger. isFetchingRef coalesces overlapping
