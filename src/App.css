@@ -232,10 +232,6 @@
   text-align: center;
 }
 
-.destination-group {
-  margin-bottom: 40px;
-}
-
 .destination-heading,
 .park-heading {
   position: sticky;
@@ -246,10 +242,6 @@
   z-index: 8;
   padding: 8px 0;
   background: var(--destination-heading-bg);
-}
-
-.park-group {
-  margin-bottom: 24px;
 }
 
 .park-heading {
