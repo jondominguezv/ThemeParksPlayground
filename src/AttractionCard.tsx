@@ -3,7 +3,9 @@ import type { CatalogEntry } from './catalog'
 export type AttractionCardProps = Pick<CatalogEntry, 'id' | 'name' | 'status' | 'waitTime'>
 
 type AttractionCardComponentProps = AttractionCardProps & {
-    onRemove: () => void
+    actionLabel: string
+    onAction: () => void
+    actionDisabled?: boolean
 }
 
 function waitTimeLevel(minutes: number): 'short' | 'moderate' | 'long' {
@@ -12,7 +14,7 @@ function waitTimeLevel(minutes: number): 'short' | 'moderate' | 'long' {
     return 'long'
 }
 
-function AttractionCard({name, status, waitTime, onRemove}: AttractionCardComponentProps) {
+function AttractionCard({name, status, waitTime, actionLabel, onAction, actionDisabled}: AttractionCardComponentProps) {
     return (
         <div className="attraction-card">
             <h3>{name}</h3>
@@ -25,7 +27,7 @@ function AttractionCard({name, status, waitTime, onRemove}: AttractionCardCompon
                     </span>
                 </p>
             )}
-            <button onClick={onRemove}>Remove</button>
+            <button onClick={onAction} disabled={actionDisabled}>{actionLabel}</button>
         </div>
     )
 }
