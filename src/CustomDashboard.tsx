@@ -1,6 +1,7 @@
 import { useMemo, type Dispatch, type SetStateAction } from 'react'
 import AttractionCard from './AttractionCard'
 import SkeletonCard from './SkeletonCard'
+import { withRemoved } from './setUtils'
 import type { CatalogEntry } from './catalog'
 
 type CustomDashboardProps = {
@@ -43,12 +44,8 @@ function CustomDashboard({ catalog, tracked, setTracked, loading, onRefresh }: C
               <AttractionCard
                 key={attraction.id}
                 {...attraction}
-                actionLabel="Remove"
-                onAction={() => setTracked(prev => {
-                  const next = new Set(prev)
-                  next.delete(attraction.id)
-                  return next
-                })}
+                variant="remove"
+                onAction={() => setTracked(prev => withRemoved(prev, attraction.id))}
               />
             ))
           )}

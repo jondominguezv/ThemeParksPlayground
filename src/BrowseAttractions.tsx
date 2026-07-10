@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import AttractionCard from './AttractionCard'
 import { useElementHeight } from './useElementHeight'
+import { withAdded, withToggled } from './setUtils'
 import type { CatalogEntry } from './catalog'
 
 type BrowseAttractionsProps = {
@@ -48,6 +49,62 @@ function sortAttractions(attractions: CatalogEntry[], sortBy: SortOption): Catal
   }
 }
 
+type DestinationGroupProps = {
+  destinationName: string
+  parks: Map<string, CatalogEntry[]>
+  sortBy: SortOption
+  pageHeaderHeight: number
+  tracked: Set<string>
+  setTracked: Dispatch<SetStateAction<Set<string>>>
+}
+
+// Each destination measures its own heading height rather than assuming
+// every destination's heading renders at the same size.
+function DestinationGroup({ destinationName, parks, sortBy, pageHeaderHeight, tracked, setTracked }: DestinationGroupProps) {
+  const [headingRef, headingHeight] = useElementHeight<HTMLHeadingElement>()
+
+  const sortedParks = useMemo(() => {
+    const result = new Map<string, CatalogEntry[]>()
+    for (const [parkName, attractions] of parks) {
+      result.set(parkName, sortAttractions(attractions, sortBy))
+    }
+    return result
+  }, [parks, sortBy])
+
+  return (
+    <div className="destination-group">
+      <h2
+        className="destination-heading"
+        ref={headingRef}
+        style={{ top: `calc(var(--nav-height) + ${pageHeaderHeight}px)` }}
+      >
+        {destinationName}
+      </h2>
+      {[...sortedParks.entries()].map(([parkName, attractions]) => (
+        <div key={parkName} className="park-group">
+          <h3
+            className="park-heading"
+            style={{ top: `calc(var(--nav-height) + ${pageHeaderHeight}px + ${headingHeight}px)` }}
+          >
+            {parkName}
+          </h3>
+          <ul className="browse-list">
+            {attractions.map((attraction) => (
+              <li key={attraction.id}>
+                <AttractionCard
+                  {...attraction}
+                  variant={tracked.has(attraction.id) ? 'added' : 'add'}
+                  onAction={() => setTracked(prev => withAdded(prev, attraction.id))}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsProps) {
   const [sortBy, setSortBy] = useState<SortOption>('name')
   const [excludedDestinations, setExcludedDestinations] = useState<Set<string>>(new Set())
@@ -56,7 +113,6 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
   const [isDestinationMenuOpen, setIsDestinationMenuOpen] = useState(false)
   const destinationMenuRef = useRef<HTMLDivElement>(null)
   const [pageHeaderRef, pageHeaderHeight] = useElementHeight<HTMLDivElement>()
-  const [destinationHeadingRef, destinationHeadingHeight] = useElementHeight<HTMLHeadingElement>()
 
   // Derived from the data itself rather than hardcoded to easily support future destinations
   // Available destinations are in ORLANDO_DESTINATIONS in catalog.ts
@@ -82,12 +138,7 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
   const groups = useMemo(() => groupByDestinationAndPark(filteredCatalog), [filteredCatalog])
 
   const toggleDestination = (name: string) => {
-    setExcludedDestinations(prev => {
-      const next = new Set(prev)
-      if (next.has(name)) next.delete(name)
-      else next.add(name)
-      return next
-    })
+    setExcludedDestinations(prev => withToggled(prev, name))
   }
 
   const selectedDestinationCount = destinationNames.length - excludedDestinations.size
@@ -156,38 +207,16 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
         </div>
       </div>
       {groups.size === 0 && <p>No attractions match your filters.</p>}
-      {[...groups.entries()].map(([destinationName, parks], index) => (
-        <div key={destinationName} className="destination-group">
-          <h2
-            className="destination-heading"
-            ref={index === 0 ? destinationHeadingRef : undefined}
-            style={{ top: `calc(var(--nav-height) + ${pageHeaderHeight}px)` }}
-          >
-            {destinationName}
-          </h2>
-          {[...parks.entries()].map(([parkName, attractions]) => (
-            <div key={parkName} className="park-group">
-              <h3
-                className="park-heading"
-                style={{ top: `calc(var(--nav-height) + ${pageHeaderHeight}px + ${destinationHeadingHeight}px)` }}
-              >
-                {parkName}
-              </h3>
-              <ul className="browse-list">
-                {sortAttractions(attractions, sortBy).map((attraction) => (
-                  <li key={attraction.id}>
-                    <AttractionCard
-                      {...attraction}
-                      actionLabel={tracked.has(attraction.id) ? 'Added' : 'Add to Dashboard'}
-                      actionDisabled={tracked.has(attraction.id)}
-                      onAction={() => setTracked(prev => prev.has(attraction.id) ? prev : new Set(prev).add(attraction.id))}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+      {[...groups.entries()].map(([destinationName, parks]) => (
+        <DestinationGroup
+          key={destinationName}
+          destinationName={destinationName}
+          parks={parks}
+          sortBy={sortBy}
+          pageHeaderHeight={pageHeaderHeight}
+          tracked={tracked}
+          setTracked={setTracked}
+        />
       ))}
     </section>
   )

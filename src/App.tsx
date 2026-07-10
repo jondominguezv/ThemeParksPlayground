@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
 import './App.css'
 import { loadCatalog, type CatalogEntry } from './catalog'
+import { useElementHeight } from './useElementHeight'
 import CustomDashboard from './CustomDashboard'
 import BrowseAttractions from './BrowseAttractions'
 
@@ -49,9 +50,19 @@ function App() {
     localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify([...tracked]))
   }, [tracked])
 
+  const [navRef, navHeight] = useElementHeight<HTMLElement>()
+
+  // Keeps --nav-height accurate (rather than a hardcoded guess) so anything
+  // stacked below nav via that variable stays correctly positioned.
+  useEffect(() => {
+    if (navHeight > 0) {
+      document.documentElement.style.setProperty('--nav-height', `${navHeight}px`)
+    }
+  }, [navHeight])
+
   return (
     <>
-      <nav className="nav">
+      <nav className="nav" ref={navRef}>
         <NavLink to="/" end>Browse All Attractions</NavLink>
         <NavLink to="/custom-dashboard">Custom Dashboard</NavLink>
       </nav>
