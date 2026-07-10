@@ -1,14 +1,14 @@
-import { useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import AttractionCard from './AttractionCard'
 import { useClickOutside } from './useClickOutside'
 import { useElementHeight } from './useElementHeight'
-import { withAdded, withToggled } from './setUtils'
+import { withToggled } from './setUtils'
 import type { CatalogEntry } from './catalog'
 
 type BrowseAttractionsProps = {
   catalog: CatalogEntry[]
   tracked: Set<string>
-  setTracked: Dispatch<SetStateAction<Set<string>>>
+  onTrack: (id: string) => void
 }
 
 const UNGROUPED_PARK_LABEL = 'Other'
@@ -67,7 +67,7 @@ type DestinationGroupProps = {
   sortBy: SortOption
   pageHeaderHeight: number
   tracked: Set<string>
-  setTracked: Dispatch<SetStateAction<Set<string>>>
+  onTrack: (id: string) => void
   isCollapsed: boolean
   onToggleCollapse: () => void
   collapsedParks: Set<string>
@@ -76,7 +76,7 @@ type DestinationGroupProps = {
 
 // Each destination measures its own heading height rather than assuming
 // every destination's heading renders at the same size.
-function DestinationGroup({ destinationName, parks, sortBy, pageHeaderHeight, tracked, setTracked, isCollapsed, onToggleCollapse, collapsedParks, onToggleParkCollapse }: DestinationGroupProps) {
+function DestinationGroup({ destinationName, parks, sortBy, pageHeaderHeight, tracked, onTrack, isCollapsed, onToggleCollapse, collapsedParks, onToggleParkCollapse }: DestinationGroupProps) {
   const [headingRef, headingHeight] = useElementHeight<HTMLHeadingElement>()
 
   const sortedParks = useMemo(() => {
@@ -124,7 +124,7 @@ function DestinationGroup({ destinationName, parks, sortBy, pageHeaderHeight, tr
                     <AttractionCard
                       {...attraction}
                       variant={tracked.has(attraction.id) ? 'added' : 'add'}
-                      onAction={() => setTracked(prev => withAdded(prev, attraction.id))}
+                      onAction={() => onTrack(attraction.id)}
                     />
                   </li>
                 ))}
@@ -137,7 +137,7 @@ function DestinationGroup({ destinationName, parks, sortBy, pageHeaderHeight, tr
   )
 }
 
-function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsProps) {
+function BrowseAttractions({ catalog, tracked, onTrack }: BrowseAttractionsProps) {
   const [sortBy, setSortBy] = useState<SortOption>('name')
   const [excludedDestinations, setExcludedDestinations] = useState<Set<string>>(new Set())
   const [statusFilter, setStatusFilter] = useState('all')
@@ -260,7 +260,7 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
           sortBy={sortBy}
           pageHeaderHeight={pageHeaderHeight}
           tracked={tracked}
-          setTracked={setTracked}
+          onTrack={onTrack}
           isCollapsed={collapsedDestinations.has(destinationName)}
           onToggleCollapse={() => toggleDestinationCollapse(destinationName)}
           collapsedParks={collapsedParks}

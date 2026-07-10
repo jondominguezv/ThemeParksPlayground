@@ -1,9 +1,11 @@
+import { useCallback } from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
 import './App.css'
 import { loadCatalog as loadCatalogFromApi, type CatalogEntry } from './catalog'
 import { useCatalog } from './useCatalog'
 import { useCssVariableHeight } from './useCssVariableHeight'
 import { usePersistentSet } from './usePersistentSet'
+import { withAdded, withRemoved } from './setUtils'
 import CustomDashboard from './CustomDashboard'
 import BrowseAttractions from './BrowseAttractions'
 
@@ -19,6 +21,15 @@ function App({ loadCatalog = loadCatalogFromApi }: AppProps = {}) {
   const { catalog, loading, refresh: loadAttractions } = useCatalog(loadCatalog, REFRESH_INTERVAL_MS)
   const [tracked, setTracked] = usePersistentSet(TRACKED_STORAGE_KEY)
 
+  const trackAttraction = useCallback(
+    (id: string) => setTracked(prev => withAdded(prev, id)),
+    [setTracked]
+  )
+  const untrackAttraction = useCallback(
+    (id: string) => setTracked(prev => withRemoved(prev, id)),
+    [setTracked]
+  )
+
   const navRef = useCssVariableHeight<HTMLElement>('--nav-height')
 
   return (
@@ -32,14 +43,14 @@ function App({ loadCatalog = loadCatalogFromApi }: AppProps = {}) {
           <BrowseAttractions
             catalog={catalog}
             tracked={tracked}
-            setTracked={setTracked}
+            onTrack={trackAttraction}
           />
         } />
         <Route path="/tracked-attractions" element={
           <CustomDashboard
             catalog={catalog}
             tracked={tracked}
-            setTracked={setTracked}
+            onUntrack={untrackAttraction}
             loading={loading}
             onRefresh={loadAttractions}
           />
