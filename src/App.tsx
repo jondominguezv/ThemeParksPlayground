@@ -64,7 +64,7 @@ function App() {
     <>
       <nav className="nav" ref={navRef}>
         <NavLink to="/" end>Browse All Attractions</NavLink>
-        <NavLink to="/custom-dashboard">Custom Dashboard</NavLink>
+        <NavLink to="/tracked-attractions">Tracked Attractions</NavLink>
       </nav>
       <Routes>
         <Route path="/" element={
@@ -74,7 +74,7 @@ function App() {
             setTracked={setTracked}
           />
         } />
-        <Route path="/custom-dashboard" element={
+        <Route path="/tracked-attractions" element={
           <CustomDashboard
             catalog={catalog}
             tracked={tracked}
