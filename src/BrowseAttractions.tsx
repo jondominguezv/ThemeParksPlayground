@@ -1,4 +1,4 @@
-import { useMemo, useState, type Dispatch, type SetStateAction } from 'react'
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import type { CatalogEntry } from './catalog'
 
 type BrowseAttractionsProps = {
@@ -51,6 +51,8 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
   const [excludedDestinations, setExcludedDestinations] = useState<Set<string>>(new Set())
   const [statusFilter, setStatusFilter] = useState('all')
   const [searchText, setSearchText] = useState('')
+  const [isDestinationMenuOpen, setIsDestinationMenuOpen] = useState(false)
+  const destinationMenuRef = useRef<HTMLDivElement>(null)
 
   // Derived from the data itself rather than hardcoded to easily support future destinations
   // Available destinations are in ORLANDO_DESTINATIONS in catalog.ts
@@ -84,6 +86,23 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
     })
   }
 
+  const selectedDestinationCount = destinationNames.length - excludedDestinations.size
+  const destinationButtonLabel = selectedDestinationCount === destinationNames.length
+    ? 'Destinations'
+    : `Destinations (${selectedDestinationCount}/${destinationNames.length})`
+
+  // Close the dropdown on an outside click, same pattern as any menu/popover.
+  useEffect(() => {
+    if (!isDestinationMenuOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (destinationMenuRef.current && !destinationMenuRef.current.contains(e.target as Node)) {
+        setIsDestinationMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isDestinationMenuOpen])
+
   return (
     <section id="browse">
       <div className="page-header">
@@ -107,21 +126,31 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
             <option value="waitTime-asc">Wait time (low→high)</option>
             <option value="status">Status</option>
           </select>
+          <div className="dropdown" ref={destinationMenuRef}>
+            <button
+              type="button"
+              aria-expanded={isDestinationMenuOpen}
+              onClick={() => setIsDestinationMenuOpen((open) => !open)}
+            >
+              {destinationButtonLabel} ▾
+            </button>
+            {isDestinationMenuOpen && (
+              <div className="dropdown-panel">
+                {destinationNames.map((name) => (
+                  <label key={name}>
+                    <input
+                      type="checkbox"
+                      checked={!excludedDestinations.has(name)}
+                      onChange={() => toggleDestination(name)}
+                    />
+                    {name}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-      <fieldset className="destination-filter">
-        <legend>Destinations</legend>
-        {destinationNames.map((name) => (
-          <label key={name}>
-            <input
-              type="checkbox"
-              checked={!excludedDestinations.has(name)}
-              onChange={() => toggleDestination(name)}
-            />
-            {name}
-          </label>
-        ))}
-      </fieldset>
       {groups.size === 0 && <p>No attractions match your filters.</p>}
       {[...groups.entries()].map(([destinationName, parks]) => (
         <div key={destinationName} className="destination-group">
