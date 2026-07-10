@@ -3,6 +3,7 @@ import { Routes, Route, NavLink } from 'react-router-dom'
 import './App.css'
 import { loadCatalog as loadCatalogFromApi, type CatalogEntry } from './catalog'
 import { useElementHeight } from './useElementHeight'
+import { usePersistentSet } from './usePersistentSet'
 import CustomDashboard from './CustomDashboard'
 import BrowseAttractions from './BrowseAttractions'
 
@@ -16,15 +17,7 @@ type AppProps = {
 
 function App({ loadCatalog = loadCatalogFromApi }: AppProps = {}) {
   const [catalog, setCatalog] = useState<CatalogEntry[]>([])
-  // Get tracked attractions from local storage to persist on refresh
-  const [tracked, setTracked] = useState<Set<string>>(() => {
-    const raw = localStorage.getItem(TRACKED_STORAGE_KEY)
-    try {
-      return raw ? new Set(JSON.parse(raw) as string[]) : new Set()
-    } catch {
-      return new Set()
-    }
-  })
+  const [tracked, setTracked] = usePersistentSet(TRACKED_STORAGE_KEY)
   const [loading, setLoading] = useState(true)
   const isFetchingRef = useRef(false)
 
@@ -49,11 +42,6 @@ function App({ loadCatalog = loadCatalogFromApi }: AppProps = {}) {
     const intervalId = setInterval(loadAttractions, REFRESH_INTERVAL_MS)
     return () => clearInterval(intervalId)
   }, [loadAttractions])
-
-  // Runs whenever `tracked` changes, persisting the current set of IDs.
-  useEffect(() => {
-    localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify([...tracked]))
-  }, [tracked])
 
   const [navRef, navHeight] = useElementHeight<HTMLElement>()
 
