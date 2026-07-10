@@ -1,10 +1,8 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import './App.css'
-import AttractionCard from './AttractionCard'
-import AttractionPicker from './AttractionPicker'
-import SkeletonCard from './SkeletonCard'
 import { loadCatalog, type CatalogEntry } from './catalog'
+import CustomDashboard from './CustomDashboard'
 
 const TRACKED_STORAGE_KEY = 'trackedAttractionIds'
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
@@ -50,61 +48,16 @@ function App() {
     localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify([...tracked]))
   }, [tracked])
 
-  const trackedAttractions = useMemo(
-    () => [...tracked]
-      .map((id) => catalog.find((a) => a.id === id))
-      .filter((a): a is CatalogEntry => a !== undefined),
-    [tracked, catalog]
-  )
-
-  const pickerOptions = useMemo(
-    () => catalog
-      .map(a => ({ id: a.id, name: a.name }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
-    [catalog]
-  )
-
   return (
     <Routes>
       <Route path="/" element={
-        <>
-          <div className="ticks"></div>
-          <section id="attractions">
-            <h1>Orlando Attractions</h1>
-            <div className="toolbar">
-              <AttractionPicker
-                options={pickerOptions}
-                onAdd={(id) => setTracked(prev => prev.has(id) ? prev : new Set(prev).add(id))}
-              />
-              <button onClick={loadAttractions} disabled={loading}>
-                {loading ? 'Refreshing wait times...' : 'Refresh Wait Times'}
-              </button>
-            </div>
-            <div className="attraction-grid">
-              {loading && catalog.length === 0 ? (
-                Array.from({ length: tracked.size || 3 }, (_, i) => <SkeletonCard key={i} />)
-              ) : tracked.size === 0 ? (
-                <p>No attractions tracked yet, add one above.</p>
-              ) : trackedAttractions.length === 0 ? (
-                <p>Tracked attractions couldn't be found in the latest data.</p>
-              ) : (
-                trackedAttractions.map((attraction) => (
-                  <AttractionCard
-                    key={attraction.id}
-                    {...attraction}
-                    onRemove={() => setTracked(prev => {
-                      const next = new Set(prev)
-                      next.delete(attraction.id)
-                      return next
-                    })}
-                  />
-                ))
-              )}
-            </div>
-          </section>
-          <div className="ticks"></div>
-          <section id="spacer"></section>
-        </>
+        <CustomDashboard
+          catalog={catalog}
+          tracked={tracked}
+          setTracked={setTracked}
+          loading={loading}
+          onRefresh={loadAttractions}
+        />
       } />
     </Routes>
   )
