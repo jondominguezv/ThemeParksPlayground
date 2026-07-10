@@ -262,7 +262,7 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
 
 /* Flexbox: one row of items (picker + button) that should align
