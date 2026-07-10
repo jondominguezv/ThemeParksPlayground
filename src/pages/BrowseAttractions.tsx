@@ -257,6 +257,8 @@ function BrowseAttractions({ catalog, tracked, onTrack, loading }: BrowseAttract
         <ul className="browse-list">
           {Array.from({ length: 6 }, (_, i) => <SkeletonCard key={i} />)}
         </ul>
+      ) : catalog.length === 0 ? (
+        <p>Attractions couldn't be found in the latest data.</p>
       ) : groups.size === 0 ? (
         <p>No attractions match your filters.</p>
       ) : (
