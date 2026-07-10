@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, NavLink } from 'react-router-dom'
 import './App.css'
 import { loadCatalog, type CatalogEntry } from './catalog'
 import CustomDashboard from './CustomDashboard'
+import BrowseAttractions from './BrowseAttractions'
 
 const TRACKED_STORAGE_KEY = 'trackedAttractionIds'
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
@@ -49,17 +50,30 @@ function App() {
   }, [tracked])
 
   return (
-    <Routes>
-      <Route path="/" element={
-        <CustomDashboard
-          catalog={catalog}
-          tracked={tracked}
-          setTracked={setTracked}
-          loading={loading}
-          onRefresh={loadAttractions}
-        />
-      } />
-    </Routes>
+    <>
+      <nav className="nav">
+        <NavLink to="/" end>Browse All Attractions</NavLink>
+        <NavLink to="/custom-dashboard">Custom Dashboard</NavLink>
+      </nav>
+      <Routes>
+        <Route path="/" element={
+          <BrowseAttractions
+            catalog={catalog}
+            tracked={tracked}
+            setTracked={setTracked}
+          />
+        } />
+        <Route path="/custom-dashboard" element={
+          <CustomDashboard
+            catalog={catalog}
+            tracked={tracked}
+            setTracked={setTracked}
+            loading={loading}
+            onRefresh={loadAttractions}
+          />
+        } />
+      </Routes>
+    </>
   )
 }
 
