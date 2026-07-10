@@ -96,6 +96,28 @@ async function loadDestinationCatalog(destination: Destination, client: ThemePar
         })
 }
 
+type DestinationFailure = { destinationName: string; reason: unknown }
+
+// Pure reduction of settled results into successes/failures, with no logging
+// or other side effects, so it can be tested against fake results directly.
+function collectCatalogResults(
+    results: PromiseSettledResult<CatalogEntry[]>[],
+    destinations: readonly Destination[]
+): { entries: CatalogEntry[]; failures: DestinationFailure[] } {
+    const entries: CatalogEntry[] = []
+    const failures: DestinationFailure[] = []
+
+    results.forEach((result, i) => {
+        if (result.status === 'rejected') {
+            failures.push({ destinationName: destinations[i].name, reason: result.reason })
+        } else {
+            entries.push(...result.value)
+        }
+    })
+
+    return { entries, failures }
+}
+
 export async function loadCatalog(
     destinations: readonly Destination[] = ORLANDO_DESTINATIONS,
     client: ThemeParks = defaultClient
@@ -104,11 +126,10 @@ export async function loadCatalog(
         destinations.map((destination) => loadDestinationCatalog(destination, client))
     )
 
-    return results.flatMap((result, i) => {
-        if (result.status === 'rejected') {
-            console.error(`Failed to load ${destinations[i].name}:`, result.reason)
-            return []
-        }
-        return result.value
-    })
+    const { entries, failures } = collectCatalogResults(results, destinations)
+    for (const failure of failures) {
+        console.error(`Failed to load ${failure.destinationName}:`, failure.reason)
+    }
+
+    return entries
 }
