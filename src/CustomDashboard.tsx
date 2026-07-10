@@ -1,6 +1,5 @@
 import { useMemo, type Dispatch, type SetStateAction } from 'react'
 import AttractionCard from './AttractionCard'
-import AttractionPicker from './AttractionPicker'
 import SkeletonCard from './SkeletonCard'
 import type { CatalogEntry } from './catalog'
 
@@ -20,23 +19,12 @@ function CustomDashboard({ catalog, tracked, setTracked, loading, onRefresh }: C
     [tracked, catalog]
   )
 
-  const pickerOptions = useMemo(
-    () => catalog
-      .map(a => ({ id: a.id, name: a.name }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
-    [catalog]
-  )
-
   return (
     <>
       <div className="ticks"></div>
       <section id="attractions">
         <h1>Orlando Attractions</h1>
         <div className="toolbar">
-          <AttractionPicker
-            options={pickerOptions}
-            onAdd={(id) => setTracked(prev => prev.has(id) ? prev : new Set(prev).add(id))}
-          />
           <button onClick={onRefresh} disabled={loading}>
             {loading ? 'Refreshing wait times...' : 'Refresh Wait Times'}
           </button>
@@ -45,7 +33,7 @@ function CustomDashboard({ catalog, tracked, setTracked, loading, onRefresh }: C
           {loading && catalog.length === 0 ? (
             Array.from({ length: tracked.size || 3 }, (_, i) => <SkeletonCard key={i} />)
           ) : tracked.size === 0 ? (
-            <p>No attractions tracked yet, add one above.</p>
+            <p>No attractions tracked yet, add some from Browse page.</p>
           ) : trackedAttractions.length === 0 ? (
             <p>Tracked attractions couldn't be found in the latest data.</p>
           ) : (
