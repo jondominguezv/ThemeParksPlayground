@@ -1,9 +1,8 @@
-import { useEffect } from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
 import './App.css'
 import { loadCatalog as loadCatalogFromApi, type CatalogEntry } from './catalog'
 import { useCatalog } from './useCatalog'
-import { useElementHeight } from './useElementHeight'
+import { useCssVariableHeight } from './useCssVariableHeight'
 import { usePersistentSet } from './usePersistentSet'
 import CustomDashboard from './CustomDashboard'
 import BrowseAttractions from './BrowseAttractions'
@@ -20,15 +19,7 @@ function App({ loadCatalog = loadCatalogFromApi }: AppProps = {}) {
   const { catalog, loading, refresh: loadAttractions } = useCatalog(loadCatalog, REFRESH_INTERVAL_MS)
   const [tracked, setTracked] = usePersistentSet(TRACKED_STORAGE_KEY)
 
-  const [navRef, navHeight] = useElementHeight<HTMLElement>()
-
-  // Keeps --nav-height accurate (rather than a hardcoded guess) so anything
-  // stacked below nav via that variable stays correctly positioned.
-  useEffect(() => {
-    if (navHeight > 0) {
-      document.documentElement.style.setProperty('--nav-height', `${navHeight}px`)
-    }
-  }, [navHeight])
+  const navRef = useCssVariableHeight<HTMLElement>('--nav-height')
 
   return (
     <>
