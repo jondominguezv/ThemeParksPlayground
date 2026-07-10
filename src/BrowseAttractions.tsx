@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
+import { useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import AttractionCard from './AttractionCard'
+import { useClickOutside } from './useClickOutside'
 import { useElementHeight } from './useElementHeight'
 import { withAdded, withToggled } from './setUtils'
 import type { CatalogEntry } from './catalog'
@@ -200,17 +201,7 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
     ? 'Destinations'
     : `Destinations (${selectedDestinationCount}/${destinationNames.length})`
 
-  // Close the dropdown on an outside click, same pattern as any menu/popover.
-  useEffect(() => {
-    if (!isDestinationMenuOpen) return
-    const handleClickOutside = (e: MouseEvent) => {
-      if (destinationMenuRef.current && !destinationMenuRef.current.contains(e.target as Node)) {
-        setIsDestinationMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isDestinationMenuOpen])
+  useClickOutside(destinationMenuRef, isDestinationMenuOpen, () => setIsDestinationMenuOpen(false))
 
   return (
     <section id="browse">
