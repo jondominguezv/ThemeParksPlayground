@@ -1,64 +1,36 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useCallback } from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
 import './App.css'
-import { loadCatalog, type CatalogEntry } from './catalog'
-import { useElementHeight } from './useElementHeight'
+import { loadCatalog as loadCatalogFromApi, type CatalogEntry } from './catalog'
+import { useCatalog } from './useCatalog'
+import { useCssVariableHeight } from './useCssVariableHeight'
+import { usePersistentSet } from './usePersistentSet'
+import { withAdded, withRemoved } from './setUtils'
 import CustomDashboard from './CustomDashboard'
 import BrowseAttractions from './BrowseAttractions'
 
 const TRACKED_STORAGE_KEY = 'trackedAttractionIds'
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
 
-function App() {
-  const [catalog, setCatalog] = useState<CatalogEntry[]>([])
-  // Get tracked attractions from local storage to persist on refresh
-  const [tracked, setTracked] = useState<Set<string>>(() => {
-    const raw = localStorage.getItem(TRACKED_STORAGE_KEY)
-    try {
-      return raw ? new Set(JSON.parse(raw) as string[]) : new Set()
-    } catch {
-      return new Set()
-    }
-  })
-  const [loading, setLoading] = useState(true)
-  const isFetchingRef = useRef(false)
+type AppProps = {
+  // Defaults to the real API loader; tests can inject a fake instead.
+  loadCatalog?: () => Promise<CatalogEntry[]>
+}
 
-  const loadAttractions = useCallback(async () => {
-    if (isFetchingRef.current) return
-    isFetchingRef.current = true
-    try {
-      setLoading(true)
-      const attractions = await loadCatalog()
-      setCatalog(attractions)
-    } catch (err) {
-      // TODO: Add real error handling
-      console.log(`Error loading attractions: ${err}`);
-    } finally {
-      setLoading(false)
-      isFetchingRef.current = false
-    }
-  }, [])
+function App({ loadCatalog = loadCatalogFromApi }: AppProps = {}) {
+  const { catalog, loading, refresh: loadAttractions } = useCatalog(loadCatalog, REFRESH_INTERVAL_MS)
+  const [tracked, setTracked] = usePersistentSet(TRACKED_STORAGE_KEY)
 
-  useEffect(() => {
-    loadAttractions()
-    const intervalId = setInterval(loadAttractions, REFRESH_INTERVAL_MS)
-    return () => clearInterval(intervalId)
-  }, [loadAttractions])
+  const trackAttraction = useCallback(
+    (id: string) => setTracked(prev => withAdded(prev, id)),
+    [setTracked]
+  )
+  const untrackAttraction = useCallback(
+    (id: string) => setTracked(prev => withRemoved(prev, id)),
+    [setTracked]
+  )
 
-  // Runs whenever `tracked` changes, persisting the current set of IDs.
-  useEffect(() => {
-    localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify([...tracked]))
-  }, [tracked])
-
-  const [navRef, navHeight] = useElementHeight<HTMLElement>()
-
-  // Keeps --nav-height accurate (rather than a hardcoded guess) so anything
-  // stacked below nav via that variable stays correctly positioned.
-  useEffect(() => {
-    if (navHeight > 0) {
-      document.documentElement.style.setProperty('--nav-height', `${navHeight}px`)
-    }
-  }, [navHeight])
+  const navRef = useCssVariableHeight<HTMLElement>('--nav-height')
 
   return (
     <>
@@ -71,14 +43,14 @@ function App() {
           <BrowseAttractions
             catalog={catalog}
             tracked={tracked}
-            setTracked={setTracked}
+            onTrack={trackAttraction}
           />
         } />
         <Route path="/tracked-attractions" element={
           <CustomDashboard
             catalog={catalog}
             tracked={tracked}
-            setTracked={setTracked}
+            onUntrack={untrackAttraction}
             loading={loading}
             onRefresh={loadAttractions}
           />

@@ -8,9 +8,11 @@ const themeParksOptions: ConstructorParameters<typeof ThemeParks>[0] = {
         return fetch(input, { ...init, headers })
     },
 }
-const tp = new ThemeParks(themeParksOptions)
+// Default client for production use; loadCatalog also accepts an injected
+// client so callers (e.g. tests) can supply a fake instead.
+const defaultClient = new ThemeParks(themeParksOptions)
 
-// Resolved via tp.destinations.list() and pinned rather than matched by name/slug each run.
+// Resolved via ThemeParks().destinations.list() and pinned rather than matched by name/slug each run.
 const ORLANDO_DESTINATIONS = [
     { id: '89db5d43-c434-4097-b71f-f6869f495a22', name: 'Universal Orlando Resort' },
     { id: 'e957da41-3552-4cf6-b636-5babc5cbc4e5', name: 'Walt Disney World Resort' },
@@ -61,19 +63,19 @@ function buildParkIndex(children: EntityChild[]): ParkIndex {
     return index
 }
 
-async function loadDestinationChildren(destination: Destination): Promise<EntityChild[]> {
+async function loadDestinationChildren(destination: Destination, client: ThemeParks): Promise<EntityChild[]> {
     const children: EntityChild[] = []
-    for await (const child of tp.entity(destination.id).walk()) {
+    for await (const child of client.entity(destination.id).walk()) {
         children.push(child)
     }
     return children
 }
 
-async function loadDestinationCatalog(destination: Destination): Promise<CatalogEntry[]> {
+async function loadDestinationCatalog(destination: Destination, client: ThemeParks): Promise<CatalogEntry[]> {
     // No children caching b/c the themeparks SDK's caches /children by default
     const [children, live] = await Promise.all([
-        loadDestinationChildren(destination),
-        tp.entity(destination.id).live(),
+        loadDestinationChildren(destination, client),
+        client.entity(destination.id).live(),
     ])
     const parkIndex = buildParkIndex(children)
 
@@ -94,16 +96,40 @@ async function loadDestinationCatalog(destination: Destination): Promise<Catalog
         })
 }
 
-export async function loadCatalog(): Promise<CatalogEntry[]> {
+type DestinationFailure = { destinationName: string; reason: unknown }
+
+// Pure reduction of settled results into successes/failures, with no logging
+// or other side effects, so it can be tested against fake results directly.
+function collectCatalogResults(
+    results: PromiseSettledResult<CatalogEntry[]>[],
+    destinations: readonly Destination[]
+): { entries: CatalogEntry[]; failures: DestinationFailure[] } {
+    const entries: CatalogEntry[] = []
+    const failures: DestinationFailure[] = []
+
+    results.forEach((result, i) => {
+        if (result.status === 'rejected') {
+            failures.push({ destinationName: destinations[i].name, reason: result.reason })
+        } else {
+            entries.push(...result.value)
+        }
+    })
+
+    return { entries, failures }
+}
+
+export async function loadCatalog(
+    destinations: readonly Destination[] = ORLANDO_DESTINATIONS,
+    client: ThemeParks = defaultClient
+): Promise<CatalogEntry[]> {
     const results = await Promise.allSettled(
-        ORLANDO_DESTINATIONS.map(loadDestinationCatalog)
+        destinations.map((destination) => loadDestinationCatalog(destination, client))
     )
 
-    return results.flatMap((result, i) => {
-        if (result.status === 'rejected') {
-            console.error(`Failed to load ${ORLANDO_DESTINATIONS[i].name}:`, result.reason)
-            return []
-        }
-        return result.value
-    })
+    const { entries, failures } = collectCatalogResults(results, destinations)
+    for (const failure of failures) {
+        console.error(`Failed to load ${failure.destinationName}:`, failure.reason)
+    }
+
+    return entries
 }
