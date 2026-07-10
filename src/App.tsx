@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useEffect } from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
 import './App.css'
 import { loadCatalog as loadCatalogFromApi, type CatalogEntry } from './catalog'
+import { useCatalog } from './useCatalog'
 import { useElementHeight } from './useElementHeight'
 import { usePersistentSet } from './usePersistentSet'
 import CustomDashboard from './CustomDashboard'
@@ -16,32 +17,8 @@ type AppProps = {
 }
 
 function App({ loadCatalog = loadCatalogFromApi }: AppProps = {}) {
-  const [catalog, setCatalog] = useState<CatalogEntry[]>([])
+  const { catalog, loading, refresh: loadAttractions } = useCatalog(loadCatalog, REFRESH_INTERVAL_MS)
   const [tracked, setTracked] = usePersistentSet(TRACKED_STORAGE_KEY)
-  const [loading, setLoading] = useState(true)
-  const isFetchingRef = useRef(false)
-
-  const loadAttractions = useCallback(async () => {
-    if (isFetchingRef.current) return
-    isFetchingRef.current = true
-    try {
-      setLoading(true)
-      const attractions = await loadCatalog()
-      setCatalog(attractions)
-    } catch (err) {
-      // TODO: Add real error handling
-      console.log(`Error loading attractions: ${err}`);
-    } finally {
-      setLoading(false)
-      isFetchingRef.current = false
-    }
-  }, [loadCatalog])
-
-  useEffect(() => {
-    loadAttractions()
-    const intervalId = setInterval(loadAttractions, REFRESH_INTERVAL_MS)
-    return () => clearInterval(intervalId)
-  }, [loadAttractions])
 
   const [navRef, navHeight] = useElementHeight<HTMLElement>()
 
