@@ -47,13 +47,59 @@ function sortAttractions(attractions: CatalogEntry[], sortBy: SortOption): Catal
 }
 
 function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsProps) {
-  const groups = useMemo(() => groupByDestinationAndPark(catalog), [catalog])
   const [sortBy, setSortBy] = useState<SortOption>('name')
+  const [excludedDestinations, setExcludedDestinations] = useState<Set<string>>(new Set())
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [searchText, setSearchText] = useState('')
+
+  // Derived from the data itself rather than hardcoded to easily support future destinations
+  // Available destinations are in ORLANDO_DESTINATIONS in catalog.ts
+  const destinationNames = useMemo(
+    () => [...new Set(catalog.map((a) => a.destinationName))].sort(),
+    [catalog]
+  )
+  const statusOptions = useMemo(
+    () => [...new Set(catalog.map((a) => a.status))].sort(),
+    [catalog]
+  )
+
+  const filteredCatalog = useMemo(() => {
+    const search = searchText.trim().toLowerCase()
+    return catalog.filter((entry) => {
+      if (excludedDestinations.has(entry.destinationName)) return false
+      if (statusFilter !== 'all' && entry.status !== statusFilter) return false
+      if (search && !entry.name.toLowerCase().includes(search)) return false
+      return true
+    })
+  }, [catalog, excludedDestinations, statusFilter, searchText])
+
+  const groups = useMemo(() => groupByDestinationAndPark(filteredCatalog), [filteredCatalog])
+
+  const toggleDestination = (name: string) => {
+    setExcludedDestinations(prev => {
+      const next = new Set(prev)
+      if (next.has(name)) next.delete(name)
+      else next.add(name)
+      return next
+    })
+  }
 
   return (
     <section id="browse">
       <h1>Browse All Attractions</h1>
       <div className="toolbar">
+        <input
+          type="text"
+          placeholder="Search by name…"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+        />
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <option value="all">All Statuses</option>
+          {statusOptions.map((status) => (
+            <option key={status} value={status}>{status}</option>
+          ))}
+        </select>
         <select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}>
           <option value="name">Name (A–Z)</option>
           <option value="waitTime-desc">Wait time (high→low)</option>
@@ -61,6 +107,20 @@ function BrowseAttractions({ catalog, tracked, setTracked }: BrowseAttractionsPr
           <option value="status">Status</option>
         </select>
       </div>
+      <fieldset className="destination-filter">
+        <legend>Destinations</legend>
+        {destinationNames.map((name) => (
+          <label key={name}>
+            <input
+              type="checkbox"
+              checked={!excludedDestinations.has(name)}
+              onChange={() => toggleDestination(name)}
+            />
+            {name}
+          </label>
+        ))}
+      </fieldset>
+      {groups.size === 0 && <p>No attractions match your filters.</p>}
       {[...groups.entries()].map(([destinationName, parks]) => (
         <div key={destinationName} className="destination-group">
           <h2>{destinationName}</h2>
