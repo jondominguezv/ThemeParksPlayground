@@ -232,6 +232,23 @@
   text-align: center;
 }
 
+.destination-group {
+  margin-bottom: 40px;
+}
+
+.park-group {
+  margin-bottom: 24px;
+}
+
+.browse-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* Flexbox: one row of items (picker + button) that should align
    and space out along a single axis. */
 .toolbar {
