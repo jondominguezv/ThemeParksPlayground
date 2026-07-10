@@ -96,14 +96,17 @@ async function loadDestinationCatalog(destination: Destination, client: ThemePar
         })
 }
 
-export async function loadCatalog(client: ThemeParks = defaultClient): Promise<CatalogEntry[]> {
+export async function loadCatalog(
+    destinations: readonly Destination[] = ORLANDO_DESTINATIONS,
+    client: ThemeParks = defaultClient
+): Promise<CatalogEntry[]> {
     const results = await Promise.allSettled(
-        ORLANDO_DESTINATIONS.map((destination) => loadDestinationCatalog(destination, client))
+        destinations.map((destination) => loadDestinationCatalog(destination, client))
     )
 
     return results.flatMap((result, i) => {
         if (result.status === 'rejected') {
-            console.error(`Failed to load ${ORLANDO_DESTINATIONS[i].name}:`, result.reason)
+            console.error(`Failed to load ${destinations[i].name}:`, result.reason)
             return []
         }
         return result.value
