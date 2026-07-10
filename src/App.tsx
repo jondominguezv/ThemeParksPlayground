@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Routes, Route, NavLink } from 'react-router-dom'
 import './App.css'
-import AttractionCard from './AttractionCard'
-import AttractionPicker from './AttractionPicker'
-import SkeletonCard from './SkeletonCard'
 import { loadCatalog, type CatalogEntry } from './catalog'
+import { useElementHeight } from './useElementHeight'
+import CustomDashboard from './CustomDashboard'
+import BrowseAttractions from './BrowseAttractions'
 
 const TRACKED_STORAGE_KEY = 'trackedAttractionIds'
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
@@ -49,58 +50,40 @@ function App() {
     localStorage.setItem(TRACKED_STORAGE_KEY, JSON.stringify([...tracked]))
   }, [tracked])
 
-  const trackedAttractions = useMemo(
-    () => [...tracked]
-      .map((id) => catalog.find((a) => a.id === id))
-      .filter((a): a is CatalogEntry => a !== undefined),
-    [tracked, catalog]
-  )
+  const [navRef, navHeight] = useElementHeight<HTMLElement>()
 
-  const pickerOptions = useMemo(
-    () => catalog
-      .map(a => ({ id: a.id, name: a.name }))
-      .sort((a, b) => a.name.localeCompare(b.name)),
-    [catalog]
-  )
+  // Keeps --nav-height accurate (rather than a hardcoded guess) so anything
+  // stacked below nav via that variable stays correctly positioned.
+  useEffect(() => {
+    if (navHeight > 0) {
+      document.documentElement.style.setProperty('--nav-height', `${navHeight}px`)
+    }
+  }, [navHeight])
 
   return (
     <>
-      <div className="ticks"></div>
-      <section id="attractions">
-        <h1>Orlando Attractions</h1>
-        <div className="toolbar">
-          <AttractionPicker
-            options={pickerOptions}
-            onAdd={(id) => setTracked(prev => prev.has(id) ? prev : new Set(prev).add(id))}
+      <nav className="nav" ref={navRef}>
+        <NavLink to="/" end>Browse All Attractions</NavLink>
+        <NavLink to="/tracked-attractions">Tracked Attractions</NavLink>
+      </nav>
+      <Routes>
+        <Route path="/" element={
+          <BrowseAttractions
+            catalog={catalog}
+            tracked={tracked}
+            setTracked={setTracked}
           />
-          <button onClick={loadAttractions} disabled={loading}>
-            {loading ? 'Refreshing wait times...' : 'Refresh Wait Times'}
-          </button>
-        </div>
-        <div className="attraction-grid">
-          {loading && catalog.length === 0 ? (
-            Array.from({ length: tracked.size || 3 }, (_, i) => <SkeletonCard key={i} />)
-          ) : tracked.size === 0 ? (
-            <p>No attractions tracked yet, add one above.</p>
-          ) : trackedAttractions.length === 0 ? (
-            <p>Tracked attractions couldn't be found in the latest data.</p>
-          ) : (
-            trackedAttractions.map((attraction) => (
-              <AttractionCard
-                key={attraction.id}
-                {...attraction}
-                onRemove={() => setTracked(prev => {
-                  const next = new Set(prev)
-                  next.delete(attraction.id)
-                  return next
-                })}
-              />
-            ))
-          )}
-        </div>
-      </section>
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+        } />
+        <Route path="/tracked-attractions" element={
+          <CustomDashboard
+            catalog={catalog}
+            tracked={tracked}
+            setTracked={setTracked}
+            loading={loading}
+            onRefresh={loadAttractions}
+          />
+        } />
+      </Routes>
     </>
   )
 }
