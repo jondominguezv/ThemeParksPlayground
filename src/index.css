@@ -20,6 +20,12 @@
 
   --nav-height: 56px;
 
+  /* Tint ramp for stacked sticky headers; derives from --bg/--text-h so dark mode just works */
+  --page-header-bg: var(--bg);
+  --toolbar-bg: color-mix(in srgb, var(--bg) 96%, var(--text-h) 4%);
+  --destination-heading-bg: color-mix(in srgb, var(--bg) 92%, var(--text-h) 8%);
+  --park-heading-bg: color-mix(in srgb, var(--bg) 88%, var(--text-h) 12%);
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
