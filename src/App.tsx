@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
 import './App.css'
-import { loadCatalog, type CatalogEntry } from './catalog'
+import { loadCatalog as loadCatalogFromApi, type CatalogEntry } from './catalog'
 import { useElementHeight } from './useElementHeight'
 import CustomDashboard from './CustomDashboard'
 import BrowseAttractions from './BrowseAttractions'
@@ -9,7 +9,12 @@ import BrowseAttractions from './BrowseAttractions'
 const TRACKED_STORAGE_KEY = 'trackedAttractionIds'
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000 // 10 minutes
 
-function App() {
+type AppProps = {
+  // Defaults to the real API loader; tests can inject a fake instead.
+  loadCatalog?: () => Promise<CatalogEntry[]>
+}
+
+function App({ loadCatalog = loadCatalogFromApi }: AppProps = {}) {
   const [catalog, setCatalog] = useState<CatalogEntry[]>([])
   // Get tracked attractions from local storage to persist on refresh
   const [tracked, setTracked] = useState<Set<string>>(() => {
@@ -37,7 +42,7 @@ function App() {
       setLoading(false)
       isFetchingRef.current = false
     }
-  }, [])
+  }, [loadCatalog])
 
   useEffect(() => {
     loadAttractions()
